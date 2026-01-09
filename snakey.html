@@ -6,7 +6,18 @@
     <style>
         canvas { background: #222; display: block; margin: 20px auto; border: 5px solid #444; }
         body { background: #111; color: white; font-family: 'Courier New', Courier, monospace; text-align: center; }
-        #status { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 48px; color: gold; display: none; z-index: 10; }
+        #status { 
+            position: fixed;        /* Keeps it relative to the screen */
+            bottom: 200px;           /* Distance from the bottom of the screen */
+            left: 0; 
+            right: 0;               /* Left/Right 0 + text-align centers it */
+            font-size: 64px; 
+            color: gold; 
+            display: none; 
+            z-index: 10; 
+            text-shadow: 2px 2px 10px black; /* Makes it pop against the canvas */
+            text-align: center;
+        }
         .controls { margin-bottom: 10px; }
         input { padding: 5px; width: 60px; background: #333; color: white; border: 1px solid #555; }
     </style>
@@ -17,6 +28,7 @@
     
     <div class="controls">
         Speed (FPS): <input type="number" id="fpsInput" value="60" min="1" max="1000" step="5">
+        extra blocks (1-10): <input type="number" id="bpa" value="0" min="0" max="100" step="5">
     </div>
 
     <canvas id="game" width="400" height="400"></canvas>
@@ -59,9 +71,12 @@ function getNextMove(head) {
         return {x: 0, y: 1};
     }
 }
-
+const ps = document.getElementById("bpa")
+let pass = Number(ps.value)
 function update() {
+    pass = Number(ps.value)
     if (snake.length >= cols * rows) {
+        pass = 0
         gameRunning = false;
         statusText.style.display = 'block';
         setTimeout(() => {
@@ -81,8 +96,13 @@ function update() {
     if (apple && newHead.x === apple.x && newHead.y === apple.y) {
         apple = spawnApple();
     } else {
+        if (pass>0){
+            pass = Number(ps.value)
+            pass--
+            ps.value=String(pass)
+        } else{
         snake.pop();
-    }
+    }}
     return true;
 }
 

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfect Snake AI</title>
+    <style>
+        canvas { background: #222; display: block; margin: 20px auto; border: 5px solid #444; }
+        body { background: #111; color: white; font-family: 'Courier New', Courier, monospace; text-align: center; }
+        #status { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 48px; color: gold; display: none; z-index: 10; }
+        .controls { margin-bottom: 10px; }
+        input { padding: 5px; width: 60px; background: #333; color: white; border: 1px solid #555; }
+    </style>
+</head>
+<body>
+    <h2>Hamiltonian Path Snake</h2>
+    <div id="status">YOU WIN!</div>
+    
+    <div class="controls">
+        Speed (FPS): <input type="number" id="fpsInput" value="60" min="1" max="1000" step="5">
+    </div>
+
+    <canvas id="game" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const statusText = document.getElementById('status');
+const fpsInput = document.getElementById('fpsInput');
+
+const grid = 20; 
+const cols = canvas.width / grid; 
+const rows = canvas.height / grid; 
+
+let snake = [{x: 0, y: 0}];
+let apple = spawnApple();
+let gameRunning = true;
+
+function spawnApple() {
+    const emptyCells = [];
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            if (!snake.some(s => s.x === x && s.y === y)) emptyCells.push({x, y});
+        }
+    }
+    if (emptyCells.length === 0) return null;
+    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+}
+
+function getNextMove(head) {
+    const {x, y} = head;
+    if (y === 0 && x > 0) return {x: -1, y: 0};
+    if (x === 0 && y < rows - 1) return {x: 0, y: 1};
+    if (x % 2 === 1) {
+        if (y === 1 && x < cols - 1) return {x: 1, y: 0};
+        if (y === 1 && x === cols - 1) return {x: 0, y: -1};
+        return {x: 0, y: -1};
+    } else {
+        if (y === rows - 1 && x < cols - 1) return {x: 1, y: 0};
+        return {x: 0, y: 1};
+    }
+}
+
+function update() {
+    if (snake.length >= cols * rows) {
+        gameRunning = false;
+        statusText.style.display = 'block';
+        setTimeout(() => {
+            statusText.style.display = 'none';
+            snake = [{x: 0, y: 0}];
+            apple = spawnApple();
+            gameRunning = true;
+            loop(); // Restart the loop
+        }, 3000);
+        return false;
+    }
+
+    const move = getNextMove(snake[0]);
+    const newHead = {x: snake[0].x + move.x, y: snake[0].y + move.y};
+    snake.unshift(newHead);
+
+    if (apple && newHead.x === apple.x && newHead.y === apple.y) {
+        apple = spawnApple();
+    } else {
+        snake.pop();
+    }
+    return true;
+}
+
+function draw() {
+    ctx.fillStyle = '#222';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    if (apple) {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(apple.x*grid, apple.y*grid, grid-1, grid-1);
+    }
+
+    ctx.fillStyle = 'lime';
+    snake.forEach((s, i) => {
+        ctx.fillStyle = i === 0 ? '#00FF00' : '#008800';
+        ctx.fillRect(s.x*grid, s.y*grid, grid-1, grid-1);
+    });
+}
+
+function loop() {
+    if (!gameRunning) return;
+
+    if (update()) {
+        draw();
+        // Math: 1000ms / FPS = delay between frames
+        let fps = parseInt(fpsInput.value) || 60;
+        let delay = 1000 / fps;
+        
+        setTimeout(() => {
+            requestAnimationFrame(loop);
+        }, delay);
+    }
+}
+
+// Start the game once
+loop();
+</script>
+</body>
+</html>

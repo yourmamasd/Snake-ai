@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Hub</title>
+    <style>
+        body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
+        .video-item { border: 1px solid #333; margin: 10px 0; padding: 10px; border-radius: 8px; }
+        img { width: 100px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2>My Saved Videos</h2>
+    <div id="list"></div>
+
+    <script>
+        const STORAGE_KEY = "my_video_db";
+
+        // Listen for data from the Bookmarklet
+        window.addEventListener("message", (event) => {
+            const { type, video } = event.data;
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+            if (type === "SAVE") {
+                if (!data.find(v => v.link === video.link)) {
+                    data.push(video);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                }
+                // Tell the bookmarklet we are done
+                event.source.postMessage({ type: "SAVED_CONFIRM" }, event.origin);
+            } 
+            
+            if (type === "GET_DATA") {
+                event.source.postMessage({ type: "SEND_DATA", data: data }, event.origin);
+            }
+        });
+
+        function render() {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            document.getElementById('list').innerHTML = data.map(v => `
+                <div class="video-item">
+                    <img src="${v.img}">
+                    <p>${v.title}</p>
+                    <button onclick="deleteVid('${v.link}')">Delete</button>
+                </div>
+            `).join('');
+        }
+        function deleteVid(link) {
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            data = data.filter(v => v.link !== link);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            render();
+        }
+        render();
+    </script>
+</body>
+</html>
